@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as compression from 'compression';
+import { GlobalExceptionFilter } from './shared/filters/global-exception.filter';
+import { EnhancedValidationPipe } from './shared/pipes/enhanced-validation.pipe';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -25,14 +27,24 @@ async function bootstrap() {
     }),
   );
 
-  // 🔧 Global validation pipe
+  // 🔧 Global validation pipe with enhanced features
   app.useGlobalPipes(
-    new ValidationPipe({
+    new EnhancedValidationPipe({
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
+      forbidUnknownValues: true,
+      disableErrorMessages: false,
+      stopAtFirstError: false,
+      validationError: {
+        target: false,
+        value: false,
+      },
     }),
   );
+
+  // 🛡️ Global exception filter for consistent error handling
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   // 📚 Swagger documentation
   const config = new DocumentBuilder()
